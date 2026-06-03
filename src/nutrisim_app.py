@@ -3,13 +3,17 @@ NutriSim — Sistema de recomendación de sustituciones nutricionales
 Trabajo Final de Máster · Bioinformática y Bioestadística · UOC 2026
 Aracelli Salinas Venegas
 
-Uso:
+Uso (desde la raíz del proyecto TFM-similitud-nutricional):
     streamlit run nutrisim_app.py
 
-Archivos necesarios en la misma carpeta:
-    - cereales_final.csv
-    - scaler.pkl
-    - knn_normalizado.pkl
+Estructura esperada del proyecto:
+    TFM-similitud-nutricional/
+    ├── nutrisim_app.py          ← este archivo
+    ├── data/processed/
+    │   └── cereales_final.csv
+    └── src/
+        ├── scaler.pkl
+        └── knn_normalizado.pkl
 """
 
 import warnings
@@ -88,12 +92,15 @@ GRADES_ORDER = ["A", "B", "C", "D", "E"]
 # ──────────────────────────────────────────────
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
+# Rutas relativas a la estructura del repositorio TFM
+PATH_CSV    = os.path.join(BASE_DIR, "data", "processed", "cereales_final.csv")
+PATH_SCALER = os.path.join(BASE_DIR, "src", "scaler.pkl")
+PATH_KNN    = os.path.join(BASE_DIR, "src", "knn_normalizado.pkl")
+
 
 @st.cache_data(show_spinner="Cargando catálogo de cereales…")
 def load_data():
-    path = os.path.join(BASE_DIR, "cereales_final.csv")
-    df = pd.read_csv(path)
-    # Etiqueta de búsqueda limpia
+    df = pd.read_csv(PATH_CSV)
     df["_label"] = (
         df["description"].str.strip()
         + "  —  "
@@ -107,8 +114,8 @@ def load_data():
 
 @st.cache_resource(show_spinner="Cargando modelos…")
 def load_models():
-    scaler = joblib.load(os.path.join(BASE_DIR, "scaler.pkl"))
-    knn = joblib.load(os.path.join(BASE_DIR, "knn_normalizado.pkl"))
+    scaler = joblib.load(PATH_SCALER)
+    knn    = joblib.load(PATH_KNN)
     return scaler, knn
 
 
@@ -171,8 +178,8 @@ def style_table(df_table):
         return f"background: linear-gradient(90deg, #bde0fe {pct:.0f}%, white {pct:.0f}%);"
 
     return (
-        df_table.style.applymap(color_ns, subset=["Nutri-Score"])
-        .applymap(dist_bar, subset=["Distancia"])
+        df_table.style.map(color_ns, subset=["Nutri-Score"])
+        .map(dist_bar, subset=["Distancia"])
         .format({"Distancia": "{:.3f}", "Energía": "{:.0f}", "Sodio": "{:.0f}"})
         .set_properties(**{"text-align": "left"})
     )
@@ -273,8 +280,12 @@ try:
 except FileNotFoundError as e:
     st.error(
         f"❌ Archivo no encontrado: {e}\n\n"
-        "Asegúrate de que `cereales_final.csv`, `scaler.pkl` y `knn_normalizado.pkl` "
-        "estén en la misma carpeta que este script."
+        "Asegúrate de ejecutar la app **desde la raíz del proyecto**:\n"
+        "```\ncd TFM-similitud-nutricional\nstreamlit run nutrisim_app.py\n```\n\n"
+        "Estructura esperada:\n"
+        "- `data/processed/cereales_final.csv`\n"
+        "- `src/scaler.pkl`\n"
+        "- `src/knn_normalizado.pkl`"
     )
     st.stop()
 
